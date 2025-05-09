@@ -1,185 +1,120 @@
 #include <stdio.h>
-#include "linkedlist.h"
-#include "stack.h"
+#include <stdlib.h>
+#include <string.h>
 #include <assert.h>
-#include "queue.h"
+#include "sorting.h"
 
-// Color codes for output
-#define COLOR_RESET   "\033[0m"
-#define COLOR_GREEN   "\033[0;32m"
-#define COLOR_CYAN    "\033[0;36m"
-#define COLOR_YELLOW  "\033[0;33m"
-
-// Helper to get how many items are in an array
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-
-void testListOperations()
+void test_bubble_sort_int()
 {
-    printf(COLOR_CYAN "=== Exercise 1: Linked List ===\n" COLOR_RESET);
+    int data[] = {3, 1, 5, 10, 8, 7};
+    int expected[] = {1, 3, 5, 7, 8, 10};
+    size_t len = sizeof(data) / sizeof(data[0]);
 
-    List l = createList();
-    assert(l != NULL);
-    assert(l->next == l->prev);
-    assert(isEmpty(l));
-
-    printf(COLOR_GREEN "List creation passed.\n" COLOR_RESET);
-
-    const int expected_data[] = {3, 1, 5, 10, 8, 7};
-
-    // Insert numbers into the list
-    for (int i = ARRAY_SIZE(expected_data) - 1; i >= 0; i--)
+    bubble_sort_int(data, len);
+    for (size_t i = 0; i < len; i++)
     {
-        Node *n = malloc(sizeof(Node));
-        assert(n);
-        n->data = expected_data[i];
-        assert(insert(l, n));
+        assert(data[i] == expected[i]);
+        printf("%d\n", data[i]);
     }
 
-    printList(l);
-    printf("\n");
+    printf("test_bubble_sort_int passed.\n");
+}
 
-    // Verify correct order
-    Node *iter = l->next;
-    for (int i = 0; i < ARRAY_SIZE(expected_data); i++)
+void test_merge_sort_int()
+{
+    int data[] = {3, 1, 5, 10, 8, 7};
+    int expected[] = {1, 3, 5, 7, 8, 10};
+    size_t len = sizeof(data) / sizeof(data[0]);
+
+    merge_sort(data, len);
+    for (size_t i = 0; i < len; i++)
     {
-        assert(iter->data == expected_data[i]);
-        iter = iter->next;
+        assert(data[i] == expected[i]);
+        printf("%d\n", data[i]);
     }
 
-    printf(COLOR_GREEN "Insert order test passed.\n" COLOR_RESET);
-
-    // Search tests
-    for (int i = 0; i < ARRAY_SIZE(expected_data); i++)
-        assert(search(l, expected_data[i]) != NULL);
-
-    assert(search(l, 9999) == NULL);
-
-    printf(COLOR_GREEN "Search test passed.\n" COLOR_RESET);
-
-    // Max/min
-    assert(maximum(l)->data == 10);
-    assert(minimum(l)->data == 1);
-    printf(COLOR_GREEN "Min/max test passed.\n" COLOR_RESET);
-
-    // Successor/Predecessor
-    assert(successor(l, search(l, 5))->data == 7);
-    assert(predecessor(l, search(l, 10))->data == 8);
-    printf(COLOR_GREEN "Successor/predecessor test passed.\n" COLOR_RESET);
+    printf("test_merge_sort_int passed.\n");
 }
 
-void testStack()
+void test_file_with_solution(const char *problem_file)
 {
-    printf(COLOR_CYAN "\n=== Exercise 3: Stack ===\n" COLOR_RESET);
+    // Load problem file
+    int *problem_data = load_file(problem_file);
+    if (!problem_data)
+    {
+        printf("Failed to load problem file: %s\n", problem_file);
+        return;
+    }
+    int size = problem_data[0];
+    // Increment data pointer, since first index is the size
+    int *data = problem_data + 1;
 
-    Stack stack = createStack();
-    assert(stack && isEmpty(stack));
+    // Load corresponding solution file
+    char solution_file[256];
+    strncpy(solution_file, problem_file, 250);
 
-    for (int i = 1; i <= 5; i++) {
-        Node *n = malloc(sizeof(Node));
-        n->data = i;
-        assert(push(stack, n));
+    // SUbstring -problem from file name to later concatante -solutions to get the solution file
+    char *ext = strstr(solution_file, "-problem");
+
+    if (ext)
+        strcpy(ext, "-solution");
+    else
+        strcat(solution_file, "-solution");
+
+    // Load solution array
+    int *solution_data = load_file(solution_file);
+    if (!solution_data)
+    {
+        printf("Failed to load solution file: %s\n", solution_file);
+        free(problem_data);
+        return;
     }
 
-    printf(COLOR_GREEN "Push test passed.\n" COLOR_RESET);
-    printStack(stack);
+    int expected_size = solution_data[0];
+    int *expected = solution_data + 1;
 
-    for (int i = 5; i >= 1; i--) {
-        Node *p = pop(stack);
-        assert(p && p->data == i);
-        free(p);
+    if (expected_size != size)
+    {
+        printf("Mismatch in size between problem and solution\n");
+        free(problem_data);
+        free(solution_data);
+        return;
     }
 
-    assert(pop(stack) == NULL);
-    assert(peek(stack) == NULL);
-    printf(COLOR_GREEN "Pop/empty test passed.\n" COLOR_RESET);
 
-    for (int i = 10; i <= 15; i++) {
-        Node *n = malloc(sizeof(Node));
-        n->data = i;
-        push(stack, n);
+    merge_sort(data, size);
+    // Validate the sorted array
+    int passed = 1;
+    for (int i = 0; i < size; i++)
+    {
+        if (data[i] != expected[i])
+        {
+            passed = 0;
+            printf("Mismatch at index %d: got %d, expected %d\n", i, data[i], expected[i]);
+        }
     }
 
-    printStack(stack);
-    clear(stack);
-    assert(peek(stack) == NULL);
-    printf(COLOR_GREEN "Clear test passed.\n" COLOR_RESET);
+    if (passed)
+        printf("test_file_with_solution passed for %s\n", problem_file);
+    else
+        printf("test_file_with_solution FAILED for %s\n", problem_file);
+
+    free(problem_data);
+    free(solution_data);
 }
 
-void test_queue()
+int main(int argc, char *argv[])
 {
-    printf(COLOR_CYAN "\n=== Exercise 4: Queue ===\n" COLOR_RESET);
-
-    Queue queue = createStack(); 
-
-    for (int i = 0; i < 5; i++) {
-        Node *n = malloc(sizeof(Node));
-        n->data = i;
-        enqueue(queue, n);
+    // If no args passed just run simple test
+    if (argc < 2)
+    {
+        test_bubble_sort_int();
+        test_merge_sort_int();
     }
-
-    printStack(queue);
-    assert(peek_queue(queue)->data == 0);
-    printf(COLOR_GREEN "Peek test passed.\n" COLOR_RESET);
-
-    for (int i = 0; i < 5; i++) {
-        Node *n = dequeue(queue);
-        assert(n && n->data == i);
-        free(n);
+    else
+    {
+        test_file_with_solution(argv[1]);
     }
-
-    assert(dequeue(queue) == NULL);
-    printf(COLOR_GREEN "Dequeue/empty test passed.\n" COLOR_RESET);
-
-    Node *n = malloc(sizeof(Node));
-    n->data = 42;
-    enqueue(queue, n);
-    assert(dequeue(queue)->data == 42);
-    printf(COLOR_GREEN "Single value test passed.\n" COLOR_RESET);
-
-    clear(queue);
-}
-
-void testExercise2()
-{
-    printf(COLOR_CYAN "\n=== Exercise 2: Linked List Testing ===\n" COLOR_RESET);
-
-    List l1 = createList();
-    const int l1_data[] = {3, 1, 5, 10, 8, 7};
-    for (int i = 0; i < 6; i++) {
-        Node *n = malloc(sizeof(Node));
-        n->data = l1_data[i];
-        insert(l1, n);
-    }
-
-    List l2 = createList();
-    const int l2_data[] = {5, 2, 9, 6, 1, 2};
-    for (int i = 0; i < 6; i++) {
-        Node *n = malloc(sizeof(Node));
-        n->data = l2_data[i];
-        insert(l2, n);
-    }
-
-    printf(COLOR_YELLOW "Minimum of L1: %d\n" COLOR_RESET, minimum(l1)->data);
-    printf(COLOR_YELLOW "Maximum of L1: %d\n" COLOR_RESET, maximum(l1)->data);
-    printf(COLOR_YELLOW "Minimum of L2: %d\n" COLOR_RESET, minimum(l2)->data);
-    printf(COLOR_YELLOW "Maximum of L2: %d\n" COLOR_RESET, maximum(l2)->data);
-
-    printf(COLOR_YELLOW "Successor of 5 in L1: %d\n" COLOR_RESET, successor(l1, search(l1, 5))->data);
-    printf(COLOR_YELLOW "Predecessor of 5 in L1: %d\n" COLOR_RESET, predecessor(l1, search(l1, 5))->data);
-    printf(COLOR_YELLOW "Successor of 9 in L2: %s\n" COLOR_RESET,
-           successor(l2, search(l2, 9)) ? "Exists" : "NULL");
-    printf(COLOR_YELLOW "Predecessor of 9 in L2: %d\n" COLOR_RESET, predecessor(l2, search(l2, 9))->data);
-
-    printf(COLOR_YELLOW "Predecessor of max in L1 (10): %d\n" COLOR_RESET, predecessor(l1, maximum(l1))->data);
-    printf(COLOR_YELLOW "Successor of min in L2 (1): %d\n" COLOR_RESET, successor(l2, minimum(l2))->data);
-}
-
-int main()
-{
-    testListOperations();
-    testStack();
-    test_queue();
-    testExercise2();
 
     return 0;
 }
