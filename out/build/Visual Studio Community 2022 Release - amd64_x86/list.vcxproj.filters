@@ -4,6 +4,9 @@
     <ClCompile Include="C:\Users\leonb\Desktop\School\termin 2\datastrukturer_och_algoritmer\uppgift(2)\src\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\leonb\Desktop\School\termin 2\datastrukturer_och_algoritmer\uppgift(2)\src\load_file.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\leonb\Desktop\School\termin 2\datastrukturer_och_algoritmer\uppgift(2)\CMakeLists.txt" />
