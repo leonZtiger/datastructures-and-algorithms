@@ -1,120 +1,130 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <assert.h>
-#include "sorting.h"
+#include <stdio.h>
+#include "b-tree.h"
+#include "load_file.h"
 
-void test_bubble_sort_int()
-{
-    int data[] = {3, 1, 5, 10, 8, 7};
-    int expected[] = {1, 3, 5, 7, 8, 10};
-    size_t len = sizeof(data) / sizeof(data[0]);
+#define ARRAY_LEN(x) (sizeof(x) / sizeof(x[0]))
 
-    bubble_sort_int(data, len);
-    for (size_t i = 0; i < len; i++)
+void test_create_and_insert_search()
+{   
+    int values[] = {20, 10, 30, 5, 15, 25, 35};
+    TreeNode *root = createTreeFromArray(values, ARRAY_LEN(values));
+    assert(root != NULL);
+    assert(root->key == 20);
+
+    // Search for each value in the tree based on the values added from values array
+    // all values should be found
+    for (int i = 0; i < ARRAY_LEN(values); ++i)
     {
-        assert(data[i] == expected[i]);
-        printf("%d\n", data[i]);
+        TreeNode *found = search(root, values[i]);
+        assert(found != NULL);
+        assert(found->key == values[i]);
     }
-
-    printf("test_bubble_sort_int passed.\n");
+    // 100 is not in the array and those search should return NULL
+    assert(search(root, 100) == NULL); 
+    printf("createTreeFromArray & insert & search passed.\n");
 }
 
-void test_merge_sort_int()
-{
-    int data[] = {3, 1, 5, 10, 8, 7};
-    int expected[] = {1, 3, 5, 7, 8, 10};
-    size_t len = sizeof(data) / sizeof(data[0]);
-
-    merge_sort(data, len);
-    for (size_t i = 0; i < len; i++)
-    {
-        assert(data[i] == expected[i]);
-        printf("%d\n", data[i]);
-    }
-
-    printf("test_merge_sort_int passed.\n");
+void test_get_depth()
+{   
+    int values[] = {50, 30, 70, 20, 40, 60, 80};
+    TreeNode *root = createTreeFromArray(values, ARRAY_LEN(values));
+    assert(getDepth(root) == 3);
+    printf("getDepth passed.\n");
 }
 
-void test_file_with_solution(const char *problem_file)
+void test_minimum_maximum()
 {
-    // Load problem file
-    int *problem_data = load_file(problem_file);
-    if (!problem_data)
-    {
-        printf("Failed to load problem file: %s\n", problem_file);
+    int values[] = {50, 30, 70, 20, 40, 60, 80};
+    TreeNode *root = createTreeFromArray(values, ARRAY_LEN(values));
+    TreeNode *minNode = minimum(root);
+    TreeNode *maxNode = maximum(root);
+    // Assert the minimum and maximum found is correct
+    assert(minNode != NULL && minNode->key == 20);
+    assert(maxNode != NULL && maxNode->key == 80);
+    printf("minimum & maximum passed.\n");
+}
+
+void test_successor_predecessor()
+{
+    int values[] = {20, 10, 30, 5, 15, 25, 35};
+    TreeNode *root = createTreeFromArray(values, ARRAY_LEN(values));
+
+    TreeNode *n10 = search(root, 10);
+    TreeNode *n30 = search(root, 30);
+    TreeNode *n35 = search(root, 35);
+    TreeNode *n5 = search(root, 5);
+
+    // Simple chech the successor/predessor if there correct based on the values array
+    assert(successor(root, n10)->key == 15); // next larger
+    assert(successor(root, n30)->key == 35);
+    assert(successor(root, n35) == NULL); // max node has no successor
+
+    assert(predecessor(root, n30)->key == 25);
+    assert(predecessor(root, n5) == NULL); // min node has no predecessor
+    printf("successor & predecessor passed.\n");
+}
+
+void test_edge_cases()
+{
+    TreeNode *root = NULL;
+    // ensure faulty values are handled correctly
+    assert(search(root, 42) == NULL);
+    assert(getDepth(NULL) == 0);
+    assert(minimum(NULL) == NULL);
+    assert(maximum(NULL) == NULL);
+    assert(successor(NULL, NULL) == NULL);
+    assert(predecessor(NULL, NULL) == NULL);
+    assert(insert(NULL, NULL) == false);
+    assert(insert(createNode(1), NULL) == false);
+    assert(insert(NULL, createNode(2)) == false);
+
+    TreeNode *single = createNode(10);
+    assert(getDepth(single) == 1);
+    assert(minimum(single)->key == 10);
+    assert(maximum(single)->key == 10);
+    assert(successor(single, single) == NULL);
+    assert(predecessor(single, single) == NULL);
+
+    printf("All edge cases checks passed.\n");
+}
+
+void test_print_tree()
+{
+    int values[] = {50, 30, 70, 20, 40, 60, 80};
+    TreeNode *root = createTreeFromArray(values, ARRAY_LEN(values));
+    printf("\n");
+    printTree(root);
+    printf("\n");
+    printSortedTree(root);
+}
+
+void print_sorted_from_file(const char *path)
+{
+    int *arr = load_file(path);
+
+    if (arr == NULL)
         return;
-    }
-    int size = problem_data[0];
-    // Increment data pointer, since first index is the size
-    int *data = problem_data + 1;
 
-    // Load corresponding solution file
-    char solution_file[256];
-    strncpy(solution_file, problem_file, 250);
+    int len = arr[0];
+    printf("\n\n");
 
-    // SUbstring -problem from file name to later concatante -solutions to get the solution file
-    char *ext = strstr(solution_file, "-problem");
-
-    if (ext)
-        strcpy(ext, "-solution");
-    else
-        strcat(solution_file, "-solution");
-
-    // Load solution array
-    int *solution_data = load_file(solution_file);
-    if (!solution_data)
-    {
-        printf("Failed to load solution file: %s\n", solution_file);
-        free(problem_data);
-        return;
-    }
-
-    int expected_size = solution_data[0];
-    int *expected = solution_data + 1;
-
-    if (expected_size != size)
-    {
-        printf("Mismatch in size between problem and solution\n");
-        free(problem_data);
-        free(solution_data);
-        return;
-    }
-
-
-    merge_sort(data, size);
-    // Validate the sorted array
-    int passed = 1;
-    for (int i = 0; i < size; i++)
-    {
-        if (data[i] != expected[i])
-        {
-            passed = 0;
-            printf("Mismatch at index %d: got %d, expected %d\n", i, data[i], expected[i]);
-        }
-    }
-
-    if (passed)
-        printf("test_file_with_solution passed for %s\n", problem_file);
-    else
-        printf("test_file_with_solution FAILED for %s\n", problem_file);
-
-    free(problem_data);
-    free(solution_data);
+    printSortedTree(createTreeFromArray(arr++, len));
 }
 
 int main(int argc, char *argv[])
 {
-    // If no args passed just run simple test
-    if (argc < 2)
-    {
-        test_bubble_sort_int();
-        test_merge_sort_int();
-    }
-    else
-    {
-        test_file_with_solution(argv[1]);
-    }
+    test_create_and_insert_search();
+    test_get_depth();
+    test_minimum_maximum();
+    test_successor_predecessor();
+    test_edge_cases();
+    test_print_tree();
 
+    // File path passed as param
+    if (argc >= 2)
+        print_sorted_from_file(argv[1]);
+
+    printf("\n All tests passed!!\n");
     return 0;
 }
