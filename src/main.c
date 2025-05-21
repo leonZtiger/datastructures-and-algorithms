@@ -1,130 +1,193 @@
 #include <assert.h>
 #include <stdio.h>
-#include "b-tree.h"
-#include "load_file.h"
+#include "graph.h"
 
-#define ARRAY_LEN(x) (sizeof(x) / sizeof(x[0]))
-
-void test_create_and_insert_search()
-{   
-    int values[] = {20, 10, 30, 5, 15, 25, 35};
-    TreeNode *root = createTreeFromArray(values, ARRAY_LEN(values));
-    assert(root != NULL);
-    assert(root->key == 20);
-
-    // Search for each value in the tree based on the values added from values array
-    // all values should be found
-    for (int i = 0; i < ARRAY_LEN(values); ++i)
+void test_create_and_vertex_count()
+{
+    size_t N = 100;
+    Graph g = createGraph(N);
+    assert(getNumVertices(g) == N);
+    for (size_t i = 0; i < N * N; i++)
     {
-        TreeNode *found = search(root, values[i]);
-        assert(found != NULL);
-        assert(found->key == values[i]);
+        assert(g.matrix[i] == INFINITY);
     }
-    // 100 is not in the array and those search should return NULL
-    assert(search(root, 100) == NULL); 
-    printf("createTreeFromArray & insert & search passed.\n");
+    free(g.matrix);
+    printf("test_create_and_vertex_count passed.\n");
 }
 
-void test_get_depth()
-{   
-    int values[] = {50, 30, 70, 20, 40, 60, 80};
-    TreeNode *root = createTreeFromArray(values, ARRAY_LEN(values));
-    assert(getDepth(root) == 3);
-    printf("getDepth passed.\n");
-}
-
-void test_minimum_maximum()
+void test_add_edges()
 {
-    int values[] = {50, 30, 70, 20, 40, 60, 80};
-    TreeNode *root = createTreeFromArray(values, ARRAY_LEN(values));
-    TreeNode *minNode = minimum(root);
-    TreeNode *maxNode = maximum(root);
-    // Assert the minimum and maximum found is correct
-    assert(minNode != NULL && minNode->key == 20);
-    assert(maxNode != NULL && maxNode->key == 80);
-    printf("minimum & maximum passed.\n");
+    const size_t N = 100;
+    Graph g = createGraph(N);
+
+    for (size_t i = 0; i < N - 1; i++)
+    {
+        addDirectedEdge(g, i, i + 1);
+    }
+
+    for (size_t i = 0; i < N - 1; i++)
+    {
+        assert(hasEdge(g, i, i + 1) == true);
+        assert(hasEdge(g, i + 1, i) == false);
+    }
+
+    assert(getNumEdges(g) == N - 1);
+
+    free(g.matrix);
+
+    g = createGraph(N);
+
+    for (size_t i = 0; i < N - 1; i++)
+    {
+        addUndirectedEdge(g, i, i + 1);
+    }
+
+    for (size_t i = 0; i < N - 1; i++)
+    {
+        assert(hasEdge(g, i, i + 1) == true);
+        assert(hasEdge(g, i + 1, i) == true);
+    }
+
+    assert(getNumEdges(g) == N - 1);
+    printf("test_add_edges passed.\n");
 }
 
-void test_successor_predecessor()
+void test_in_out_neighbors()
 {
-    int values[] = {20, 10, 30, 5, 15, 25, 35};
-    TreeNode *root = createTreeFromArray(values, ARRAY_LEN(values));
+    const size_t N = 100;
+    Graph g = createGraph(N);
 
-    TreeNode *n10 = search(root, 10);
-    TreeNode *n30 = search(root, 30);
-    TreeNode *n35 = search(root, 35);
-    TreeNode *n5 = search(root, 5);
+    for (size_t i = 0; i < N - 1; i++)
+    {
+        addDirectedEdge(g, i, i + 1);
+    }
 
-    // Simple chech the successor/predessor if there correct based on the values array
-    assert(successor(root, n10)->key == 15); // next larger
-    assert(successor(root, n30)->key == 35);
-    assert(successor(root, n35) == NULL); // max node has no successor
+    // Test out-neighbors
+    for (size_t i = 0; i < N; i++)
+    {
+        size_t *out = NULL;
+        size_t count = 0;
+        getOutNeighbors(g, i, &out, &count);
 
-    assert(predecessor(root, n30)->key == 25);
-    assert(predecessor(root, n5) == NULL); // min node has no predecessor
-    printf("successor & predecessor passed.\n");
+        if (i < N - 1)
+        {
+            assert(count == 1);
+            assert(out[0] == i + 1);
+        }
+        else
+        {
+            assert(count == 0);
+        }
+        free(out);
+    }
+
+    // Test in-neighbors
+    for (size_t i = 0; i < N; i++)
+    {
+        size_t *in = NULL;
+        size_t count = 0;
+        getInNeighbors(g, i, &in, &count);
+
+        if (i > 0)
+        {
+            assert(count == 1);
+            assert(in[0] == i - 1);
+        }
+        else
+        {
+            assert(count == 0);
+        }
+        free(in);
+    }
+
+    free(g.matrix);
+    printf("test_in_out_neighbors passed.\n");
 }
 
-void test_edge_cases()
+void test_undirected_edges()
 {
-    TreeNode *root = NULL;
-    // ensure faulty values are handled correctly
-    assert(search(root, 42) == NULL);
-    assert(getDepth(NULL) == 0);
-    assert(minimum(NULL) == NULL);
-    assert(maximum(NULL) == NULL);
-    assert(successor(NULL, NULL) == NULL);
-    assert(predecessor(NULL, NULL) == NULL);
-    assert(insert(NULL, NULL) == false);
-    assert(insert(createNode(1), NULL) == false);
-    assert(insert(NULL, createNode(2)) == false);
+    const size_t N = 5;
+    Graph g = createGraph(N);
 
-    TreeNode *single = createNode(10);
-    assert(getDepth(single) == 1);
-    assert(minimum(single)->key == 10);
-    assert(maximum(single)->key == 10);
-    assert(successor(single, single) == NULL);
-    assert(predecessor(single, single) == NULL);
+    for (size_t i = 0; i < N - 1; i++)
+    {
+        addUndirectedEdge(g, i, i + 1);
+    }
 
-    printf("All edge cases checks passed.\n");
+    for (size_t i = 0; i < N - 1; i++)
+    {
+        assert(hasEdge(g, i, i + 1) == true);
+        assert(hasEdge(g, i + 1, i) == true);
+    }
+
+    for (size_t i = 0; i < N; i++)
+    {
+        for (size_t j = 0; j < N; j++)
+        {
+            if (i != j && !(i == j - 1 || i == j + 1))
+            {
+                assert(hasEdge(g, i, j) == false);
+            }
+        }
+    }
+
+    free(g.matrix);
+    printf("test_undirected_edges passed.\n");
 }
 
-void test_print_tree()
+void test_dijkstras_algo()
 {
-    int values[] = {50, 30, 70, 20, 40, 60, 80};
-    TreeNode *root = createTreeFromArray(values, ARRAY_LEN(values));
-    printf("\n");
-    printTree(root);
-    printf("\n");
-    printSortedTree(root);
-}
+    // Chatgpt generated code to see the matrix visually, easier to see the connections
+    float INF = INFINITY;
+    float weights[10][10] = {
+        // 0     1     2     3     4     5     6     7     8     9
+        {INF, 2.0f, 4.0f, INF, INF, INF, INF, INF, INF, INF},  // 0
+        {INF, INF, INF, 1.0f, INF, INF, INF, INF, INF, 15.0f}, // 1
+        {INF, INF, INF, 2.0f, INF, INF, INF, INF, INF, INF},   // 2
+        {INF, INF, INF, INF, 3.0f, INF, INF, INF, INF, INF},   // 3
+        {INF, INF, INF, INF, INF, 2.0f, INF, INF, INF, INF},   // 4
+        {INF, INF, INF, INF, INF, INF, 1.0f, INF, INF, INF},   // 5
+        {INF, INF, INF, INF, INF, INF, INF, 2.0f, INF, INF},   // 6
+        {INF, INF, INF, INF, INF, INF, INF, INF, 1.0f, INF},   // 7
+        {INF, INF, INF, INF, INF, INF, INF, INF, INF, 3.0f},   // 8
+        {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF}     // 9
+    };
+    // =============================================================
 
-void print_sorted_from_file(const char *path)
-{
-    int *arr = load_file(path);
+    const size_t N = 10;
+    Graph g = createGraph(N);
+    for (size_t y = 0; y < N; y++)
+    {
+        for (size_t x = 0; x < N; x++)
+        {
+            g.matrix[xy_to_index(x, y, g.dim)] = weights[x][y];
+        }
+    }
 
-    if (arr == NULL)
-        return;
+    float distances[10];
+    float len = shortest_path_to_all(g, 0, distances);
 
-    int len = arr[0];
-    printf("\n\n");
+    for (size_t i = 0; i < N; i++) {
+        if (distances[i] == FLT_MAX)
+            printf("Node 0 to %zu: Unreachable\n", i);
+        else
+            printf("Node 0 to %zu: %.2f\n", i, distances[i]);
+    }
 
-    printSortedTree(createTreeFromArray(arr++, len));
+    printf("\n total path length: ");
+    printf("%d",len);
+    free(g.matrix);
+
 }
 
 int main(int argc, char *argv[])
 {
-    test_create_and_insert_search();
-    test_get_depth();
-    test_minimum_maximum();
-    test_successor_predecessor();
-    test_edge_cases();
-    test_print_tree();
+    test_create_and_vertex_count();
+    test_add_edges();
+    test_in_out_neighbors();
+    test_undirected_edges();
 
-    // File path passed as param
-    if (argc >= 2)
-        print_sorted_from_file(argv[1]);
+    test_dijkstras_algo();
 
-    printf("\n All tests passed!!\n");
     return 0;
 }

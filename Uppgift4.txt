@@ -1,3 +1,14 @@
+How to run:
+    Open a terminal in my project folder.
+    Run "mkdir build" to create a build folder.
+    Run "cd build" to go into the build folder.
+    Run "cmake .." to set up the project.
+    Run "make" to build the program.
+    Run the built exe with ./list.exe
+    To run tests based on the files you passed, run the exe file with a passed arg of the absolote path of the problem file to test.
+    example, ./list.exe "C:\user\blah\blah\test-1000-problem"
+
+
 exercise 1:
     Implement a binary tree and provide all of the dynamic set operations (as listed in the CLRS3 book on page 230, or CLRS4 page 250).
     Add functions to compute the depth and size of a tree.
