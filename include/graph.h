@@ -131,55 +131,55 @@ bool hasEdge(Graph G, size_t v1, size_t v2)
     return hasEdgeV1;
 }
 
-float shortest_path_to_all(Graph g, size_t v_start, float *distances)
-{
-    size_t N = g.dim;
-    bool *visited = (bool *)calloc(N, sizeof(bool));
+// Initializes distances and visited arrays
+void initialize_single_source(Graph g, size_t start, float *distances, bool *visited) {
+    for (size_t i = 0; i < g.dim; i++) {
+        distances[i] = INFINITY;
+        visited[i] = false;
+    }
+    distances[start] = 0.0f;
+}
 
-    for (size_t i = 0; i < N; i++)
-        distances[i] = FLT_MAX;
+// Returns the index of the unvisited vertex with the smallest distance
+size_t extract_min_distance_vertex(float *distances, bool *visited, size_t dim) {
+    float minDist = INFINITY;
+    size_t minIndex = dim;
 
-    distances[v_start] = 0;
-
-    for (size_t i = 0; i < N; i++)
-    {
-        float minDist = FLT_MAX;
-        size_t u = N;
-
-        for (size_t j = 0; j < N; j++)
-        {
-            if (!visited[j] && distances[j] < minDist)
-            {
-                minDist = distances[j];
-                u = j;
-            }
-        }
-
-        if (u == N)
-            break;
-        visited[u] = true;
-
-        for (size_t v = 0; v < N; v++)
-        {
-            float w = g.matrix[xy_to_index(u, v, N)];
-            if (w != FLT_MAX && !visited[v])
-            {
-                float alt = distances[u] + w;
-                if (alt < distances[v])
-                    distances[v] = alt;
-            }
+    for (size_t i = 0; i < dim; i++) {
+        if (!visited[i] && distances[i] < minDist) {
+            minDist = distances[i];
+            minIndex = i;
         }
     }
 
-    float total = 0.0f;
-    for (size_t i = 0; i < N; i++)
-    {
-        if (i != v_start && distances[i] != FLT_MAX)
-            total += distances[i];
+    return minIndex;
+}
+
+// Updates the distances of neighbors if a shorter path is found
+void relax_neighbors(Graph g, size_t u, float *distances, bool *visited) {
+    for (size_t v = 0; v < g.dim; v++) {
+        float weight = g.matrix[xy_to_index(u, v, g.dim)];
+        if (!visited[v] && weight != INFINITY) {
+            if (distances[u] + weight < distances[v]) {
+                distances[v] = distances[u] + weight;
+            }
+        }
+    }
+}
+
+void shortest_path_to_all(Graph g, size_t vert_start, float *distances)
+{
+   bool *visited = (bool *)malloc(sizeof(bool) * g.dim);
+    initialize_single_source(g, vert_start, distances, visited);
+
+    for (size_t i = 0; i < g.dim; i++) {
+        size_t u = extract_min_distance_vertex(distances, visited, g.dim);
+        if (u == g.dim) break; 
+        visited[u] = true;
+        relax_neighbors(g, u, distances, visited);
     }
 
     free(visited);
-    return total;
 }
 
 #endif

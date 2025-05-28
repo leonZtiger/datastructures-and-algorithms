@@ -135,7 +135,7 @@ void test_undirected_edges()
     printf("test_undirected_edges passed.\n");
 }
 
-void test_dijkstras_algo()
+void test_shortest_path_algo()
 {
     // Chatgpt generated code to see the matrix visually, easier to see the connections
     float INF = INFINITY;
@@ -165,19 +165,68 @@ void test_dijkstras_algo()
     }
 
     float distances[10];
-    float len = shortest_path_to_all(g, 0, distances);
+    shortest_path_to_all(g, 0, distances);
 
-    for (size_t i = 0; i < N; i++) {
+    for (size_t i = 0; i < N; i++)
+    {
         if (distances[i] == FLT_MAX)
             printf("Node 0 to %zu: Unreachable\n", i);
         else
             printf("Node 0 to %zu: %.2f\n", i, distances[i]);
     }
 
-    printf("\n total path length: ");
-    printf("%d",len);
     free(g.matrix);
 
+    // Test 2!
+    float weights2[20][20] = {
+    //  0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19
+    {INF, 4,  INF, 1,  INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF}, // 0
+    {INF, INF, 3,  INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF}, // 1
+    {INF, INF, INF, INF, INF, 7,  INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF}, // 2
+    {INF, INF, INF, INF, 2,  INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF}, // 3
+    {INF, INF, INF, INF, INF, INF, 3,  INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF}, // 4
+    {INF, INF, INF, INF, INF, INF, INF, 1,  INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF}, // 5
+    {INF, INF, INF, INF, INF, INF, INF, INF, 2,  INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF}, // 6
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, 3,  INF, INF, INF, INF, INF, INF, INF, INF, INF, INF}, // 7
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, 4,  INF, INF, INF, INF, INF, INF, INF, INF, INF}, // 8
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, 1,  INF, INF, INF, INF, INF, INF, INF, INF}, // 9
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, 5,  INF, INF, INF, INF, INF, INF, INF}, //10
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, 6,  INF, INF, INF, INF, INF, INF}, //11
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, 1,  INF, INF, INF, INF, INF}, //12
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, 3,  INF, INF, INF, INF}, //13
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, 2,  INF, INF, INF}, //14
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, 4,  INF, INF}, //15
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, 6,  INF}, //16
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, 1},  //17
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF}, //18
+    {INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF, INF}  //19
+};
+
+    Graph g2 = createGraph(20);
+    for (size_t y = 0; y < 20; y++)
+    {
+        for (size_t x = 0; x < 20; x++)
+        {
+            g2.matrix[xy_to_index(x, y, g2.dim)] = weights2[x][y];
+        }
+    }
+
+    float distances2[20];
+
+    printf("Test graph 2\n");
+    shortest_path_to_all(g2, 0, distances2);
+
+    for (size_t i = 0; i < 20; i++)
+    {
+        if (distances2[i] == FLT_MAX)
+            printf("Node 0 to %zu: unreachable\n", i);
+        else
+        {
+            printf("Node 0 to %zu: %.2f\n", i, distances2[i]);
+        }
+    }
+
+    free(g2.matrix);
 }
 
 int main(int argc, char *argv[])
@@ -186,8 +235,7 @@ int main(int argc, char *argv[])
     test_add_edges();
     test_in_out_neighbors();
     test_undirected_edges();
-
-    test_dijkstras_algo();
+    test_shortest_path_algo();
 
     return 0;
 }
